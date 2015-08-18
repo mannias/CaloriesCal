@@ -1,11 +1,12 @@
 {
-    "name": "CaloriesCalculator",
-    "description": "Display your calories consumption - Toptal project",
-    "version": "0.0.1",
-    "private": true,
-    "dependencies": {
-        "express": "4.x",
-        "socket.io": "latest",
-        "mongoose": "latest"
-    }
+  "name": "CaloriesCalculator",
+  "description": "Display your calories consumption - Toptal project",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.13.3",
+    "express": "4.x",
+    "mongoose": "latest",
+    "socket.io": "latest"
+  }
 }
