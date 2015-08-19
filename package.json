@@ -6,7 +6,9 @@
   "dependencies": {
     "body-parser": "^1.13.3",
     "express": "4.x",
+    "express-session": "^1.11.3",
     "mongoose": "latest",
+    "node-uuid": "^1.4.3",
     "socket.io": "latest"
   }
 }
