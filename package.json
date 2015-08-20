@@ -5,10 +5,21 @@
   "private": true,
   "dependencies": {
     "body-parser": "^1.13.3",
+    "browserify": "^11.0.1",
     "express": "4.x",
     "express-session": "^1.11.3",
+    "flux": "^2.1.1",
+    "history": "^1.4.0",
+    "keymirror": "^0.1.1",
     "mongoose": "latest",
     "node-uuid": "^1.4.3",
+    "object-assign": "^3.0.0",
+    "react-router": "^0.13.3",
     "socket.io": "latest"
+  },
+  "browserify": {
+    "transform": [
+      "reactify"
+    ]
   }
 }

@@ -54,12 +54,10 @@ app.use(session({
 
 
 app.get("/", function(req, res){
-	var session = req.session;
-	console.log(session.username);
-	if(session.username != null){
-		res.sendFile(__dirname + '/dashboard.html');
+	if(typeof req.session.username == 'undefined'){
+		req.session.username = null;
 	}
-	res.sendFile(__dirname + '/login.html');
+	res.sendFile(__dirname + '/index.html');
 });
 
 app.post("/user/register", function(req,res){
@@ -102,8 +100,7 @@ app.post("/user/login", function(req,res){
 });
 
 app.get("/user/logout",function(req,res){
-	var session = req.session;
-	session.username = null;
+	req.session.username = null;
 })
 
 app.post("/user/:username/calories/add", function(req,res){
@@ -129,8 +126,9 @@ app.post("/user/:username/calories/add", function(req,res){
 
 app.get("/me", function(req,res){
 	var session = req.session;
-	var username == session.username;
-	if(session == null){
+	var username = session.username;
+	console.log(username);
+	if(username == null){
 		res.status(500).json({reason: "User not logged in"});
 		return;
 	}
@@ -147,7 +145,7 @@ app.get("/me", function(req,res){
 app.get("/user/:username", function(req,res){
 	var session = req.session;
 	var username = req.params.username;
-	if(session == null){
+	if(username == null){
 		res.status(500).json({reason: "User not logged in"});
 		return;
 	}
