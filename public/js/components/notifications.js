@@ -9,7 +9,6 @@ var Notifications = React.createClass({
   	},
 
   	render: function() {
-  		console.log("access");
   		if (Object.keys(this.props.allNotifications).length < 1) {
       		return null;
     	}

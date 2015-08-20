@@ -13,10 +13,16 @@ mongoose.connect('mongodb://localhost/calorieCal');
 
 var Schema = mongoose.Schema;
 
+var caloriesSchema = new Schema({
+	timestamp:Date, 
+	description: String, 
+	calories: Number
+});
+
 var userSchema = new Schema({
 	username: String,
 	password: String,
-	calories: [{timestamp:Date, description: String, calories: Number}]
+	calories: [caloriesSchema]
 });
 
 userSchema.statics.findByUsername = function(username, callback){
@@ -101,27 +107,37 @@ app.post("/user/login", function(req,res){
 
 app.get("/user/logout",function(req,res){
 	req.session.username = null;
+	res.sendStatus(200);
 })
 
 app.post("/user/:username/calories/add", function(req,res){
 	var username = req.params.username;
-	var description = req.body.desc;
+	var description = req.body.description;
 	var calories = req.body.calories;
 	var session = req.session;
 	if(session.username != username){
 		res.status(500).json({reason: "Not enough permission to modify user"});
 		return;
 	}
-	User.update({username: username}, 
-		{$push: {calories: {description:description, calories: calories, timestamp: Date.now}}},
-		{safe: true, upsert: true, new : true},
-		function(err, model) {
-            if(err){
-            	res.status(500).json({reason: "Error while updating user"});
-            }
-            res.status(200).json({username: username,calories: user.calories});
-    	}
-    );
+	var calorieEntry = {description: description, calories: calories, timestamp: new Date()}; 
+	console.log(calorieEntry);
+	var users = User.findByUsername(username, function(err, users){
+		if(users.length > 0){
+			var user = users[0];
+			user.calories.push(calorieEntry);
+			user.save(function(err){
+				if(err){
+					console.log(err);
+				}
+			});
+			res.status(200).json({username: user.username, calories: user.calories});
+		}
+	});
+});
+
+app.delete("/user/:username/calories/remove", function(req, res){
+	var username = req.params.username;
+	var id = req.body.id;
 });
 
 app.get("/me", function(req,res){

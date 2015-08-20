@@ -1,6 +1,8 @@
 var React = require('react');
 var NotificationStore = require('../store/notificationStore');
+var UserStore = require('../store/userStore');
 var Notifications = require('./notifications');
+var UserActions = require('../actions/userActions');
 
 
 function getAlertState() {
@@ -9,26 +11,44 @@ function getAlertState() {
   	};
 }
 
+function getCurrentUser(){
+	var isLogged = UserStore.getCurrentStatus();
+	return {
+		loggedIn : isLogged,
+	}
+}
+
 var Header = React.createClass({
 
 	getInitialState() {
+		var isLogged = UserStore.getCurrentStatus();
     	return {
-      		loggedIn: false,
+      		loggedIn: isLogged,
       		allNotifications: {}
     	};
   	},
 
   	componentDidMount: function(){
-  		NotificationStore.addChangeListener(this._onChange);
+  		NotificationStore.addChangeListener(this._onNotificationChange);
+  		UserStore.addChangeListener(this._onUserChange);
+
   	},
 
   	componentWillUnmount: function(){
-  		NotificationStore.removeChangeListener(this._onChange);
+  		NotificationStore.removeChangeListener(this._onNotificationChange);
+  		UserStore.removeChangeListener(this._onUserChange);
   	},
 
-  	_onChange: function(){
-  		console.log("alerted");
+  	_onUserChange: function(){
+  		this.setState(getCurrentUser());
+  	},
+
+  	_onNotificationChange: function(){
   		this.setState(getAlertState());
+  	},
+
+  	handleLogout: function(){
+  		UserActions.logout();
   	},
 
 	render: function(){
@@ -42,16 +62,14 @@ var Header = React.createClass({
 				    <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 				    	<ul className="nav navbar-nav">
 				    		{this.state.loggedIn ? (	
-					        		<li className="active">
-					        			<a href="#">Link <span className="sr-only">(current)</span></a>
-					        		</li>
+					        		<a href="#">Link <span className="sr-only">(current)</span></a>
 				        		):
 				        		(<li></li>)
 				        	}
 				        </ul>
 				      <ul className="nav navbar-nav navbar-right">
 				      	{this.state.loggedIn ?
-				        	(<li><a href="">Log Out</a></li>):
+				        	(<li><a href='#' onClick={this.handleLogout}>Log Out</a></li>):
 				        	(<li><a href="#/login">Log In</a></li>)}
 				      </ul>
 				    </div>

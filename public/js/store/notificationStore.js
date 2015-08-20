@@ -1,6 +1,7 @@
 var AppDispatcher = require('../dispacher/dispacher');
 var EventEmitter = require('events').EventEmitter;
 var AuthConstants = require('../constants/authConstants');
+var UserConstants = require('../constants/userConstants');
 var assign = require('object-assign');
 
 var _all = {};
@@ -23,12 +24,10 @@ var NotificationStore =  assign({}, EventEmitter.prototype, {
   	},
 
 	emitChange: function() {
-		console.log("emit");
 		this.emit(CHANGE_EVENT);
 	},
 
 	addChangeListener: function(callback) {
-		console.log("subscribed");
 	    this.on(CHANGE_EVENT, callback);
 	},
 
@@ -41,15 +40,17 @@ var NotificationStore =  assign({}, EventEmitter.prototype, {
 AppDispatcher.register(function(action) {
 	var message;
 	switch(action.actionType) {
-		case(AuthConstants.AUTH_LOGIN_SUCC):
+		
 		case(AuthConstants.AUTH_LOGIN_FAIL):
+		case(AuthConstants.AUTH_REG_FAIL):
+		case(UserConstants.USER_CALORIES_ADD_FAIL):
 			message = action.message;
 			create(message);
 			NotificationStore.emitChange();
 			break;
 		case(AuthConstants.AUTH_REG_SUCC):
-		case(AuthConstants.AUTH_REG_FAIL):
-			console.log(action);
+		case(AuthConstants.AUTH_LOGIN_SUCC):
+		case(UserConstants.USER_CALORIES_ADD_SUCC):
 			message = action.message;
 			create(message);
 			NotificationStore.emitChange();

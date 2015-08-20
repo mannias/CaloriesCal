@@ -1,5 +1,16 @@
 var React = require('react');
-var Router = require('react-router');
+var UserStore = require('../store/userStore');
+var AddCalories = require('./addCalories');
+var Calories = require('./calories');
+
+function getCurrentUser(){
+	var user = UserStore.getUser();
+	var isLogged = UserStore.getCurrentStatus();
+	return {
+		loggedIn : isLogged,
+		user: user
+	}
+}
 
 var CalorieEntry = React.createClass({
 
@@ -7,23 +18,44 @@ var CalorieEntry = React.createClass({
     	router: React.PropTypes.func.isRequired
   	},
 
-	render: function() {
-		var scope = this;
-		console.log("loging");
+  	getInitialState() {
+  		var user = UserStore.getUser();
+		var isLogged = UserStore.getCurrentStatus();
+    	return {
+    		user: user,
+      		loggedIn: isLogged
+    	};
+  	},
 
-		$.get("/me")
-		.done(function(result){
-			console.log(result);
-		})
-		.fail(function(err){
-			console.log(err);
-			console.log(this.context);
-			scope.context.router.replaceWith("/login");
-		});
+  	componentDidMount: function(){
+  		UserStore.addChangeListener(this._onUserChange);
+  	},
+
+  	componentWillUnmount: function(){
+  		UserStore.removeChangeListener(this._onUserChange);
+  	},
+
+  	_onUserChange: function(){
+  		this.setState(getCurrentUser());
+  	},
+
+	render: function() {
+		if(!this.state.loggedIn){
+			this.context.router.replaceWith('/login');
+			return null;
+		}
 		return(
 			<div>
-				<a>Title</a>
+				{this.state.user.username}
+				{this.state.user.calories.length == 0 ?
+					(<div> <a> Add calories now!</a>
+						<AddCalories username={this.state.user.username}/></div>):
+					(<div>
+						<Calories allCalories = {this.state.user.calories} username = {this.state.user.username}/>
+					</div>)}
+				
 			</div>
+		
 		)
     }
 });

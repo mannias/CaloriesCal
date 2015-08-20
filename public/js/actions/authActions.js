@@ -1,14 +1,11 @@
 var AppDispatcher = require('../dispacher/dispacher');
 var AuthConstants = require('../constants/authConstants');
+var UserActions = require('./userActions');
 var React = require('react');
 
 var AuthActions = {
 
-	contextTypes: {
-      router: React.PropTypes.func.isRequired
-    },
-
-	login: function(username, password){
+	login: function(username, password, redirect){
 		var scope = this;
 		if(username != null && password != null){
   			console.log(username + " " + password);
@@ -18,8 +15,7 @@ var AuthActions = {
   						actionType: AuthConstants.AUTH_LOGIN_SUCC,
   						message: result
   					})
-  					console.log(result);
-            		scope.context.router.replaceWith('/');
+  					UserActions.getMe(redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){
   					AppDispatcher.dispatch({
@@ -30,7 +26,7 @@ var AuthActions = {
   		}
 	},
 
-	register: function(username, password){
+	register: function(username, password, redirect){
 		var scope = this;
 		if(username != null && password != null){
   			console.log(username + " " + password);
@@ -40,7 +36,7 @@ var AuthActions = {
   						actionType: AuthConstants.AUTH_REG_SUCC,
   						message: result
   					})
-            		scope.context.router.replaceWith('/');
+            		UserActions.getMe(redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){
   					AppDispatcher.dispatch({

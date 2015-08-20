@@ -3,6 +3,7 @@ var React = require('react');
 var Header = require('./components/header');
 var Login = require('./components/login');
 var Dashboard = require('./components/dashboard');
+var UserActions = require('./actions/userActions');
 
 var DefaultRoute = Router.DefaultRoute;
 var Link = Router.Link;
@@ -10,8 +11,20 @@ var Route = Router.Route;
 var RouteHandler = Router.RouteHandler;
 
 var CaloriesApp = React.createClass({
+
+  contextTypes: {
+      router: React.PropTypes.func.isRequired
+  },
+
+  getInitialState() {
+    var scope = this;
+    UserActions.getMe(function(){
+      scope.context.router.replaceWith('/');
+    }); 
+    return null; 
+  },
+
 	render: function() {
-    console.log("rendering");
     	return (
     		<div>
     			<Header />
@@ -24,7 +37,7 @@ var CaloriesApp = React.createClass({
 var routes = (
 	<Route handler={CaloriesApp} path="/">
 		<DefaultRoute handler={Dashboard} />
-		<Route name="login" path="/login" handler={Login} />
+    <Route name="login" path="/login" handler={Login} />
 	</Route>
 );
 
