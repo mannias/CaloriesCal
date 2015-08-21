@@ -22,6 +22,7 @@ var caloriesSchema = new Schema({
 var userSchema = new Schema({
 	username: String,
 	password: String,
+	caloriesTarget: Number,
 	calories: [caloriesSchema]
 });
 
@@ -72,10 +73,10 @@ app.post("/user/register", function(req,res){
 	var password = req.body.password;
 	User.findByUsername(username, function(err, users){
 		if(users.length == 0){
-			var user = new User({username: username, password:password});
+			var user = new User({username: username, password:password, caloriesTarget: 0});
 			user.save();
 			session.username = username;
-			res.status(200);
+			res.sendStatus(200);
 		}else{
 			res.status(500).json({ reason: "User already exists" });
 		}
@@ -133,7 +134,7 @@ app.post("/user/:username/calories/add", function(req,res){
 					console.log(err);
 				}
 			});
-			res.status(200).json({username: user.username, calories: user.calories});
+			res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories});
 		}
 	});
 });
@@ -156,7 +157,7 @@ app.post("/user/:username/calories/remove", function(req, res){
 				User.findByUsername(username, function(err, users){
 					if(users.length > 0){
 						var user = users[0];
-						res.status(200).json({username: user.username, calories: user.calories});
+						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories});
 					}
 				});
 			}
@@ -179,15 +180,46 @@ app.post("/user/:username/calories/edit", function(req,res){
 		{username: username, 'calories._id': id },
 		{$set: {'calories.$.description': description, 'calories.$.calories': calories}},
 		function(err,status){
-			User.findByUsername(username, function(err, users){
-				if(users.length > 0){
-					var user = users[0];
-					res.status(200).json({username: user.username, calories: user.calories});
-				}
-			});
+			if(err){
+				res.status(500).json({reason: "User not found"});
+			}else{
+				User.findByUsername(username, function(err, users){
+					if(users.length > 0){
+						var user = users[0];
+						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories});
+					}
+				});
+			}
 		}
 	)
-})
+});
+
+app.post("/user/:username/target/edit", function(req,res){
+	var username = req.params.username;
+	var session = req.session;
+	var target = req.body.target;
+	console.log(username + " " + session.username);
+	if(session.username != username){
+		res.status(500).json({reason: "Not enough permission to modify user"});
+		return;
+	}
+	User.update(
+		{username: username},
+		{caloriesTarget: target},
+		function(err,status){
+			if(err){
+				res.status(500).json({reason: "Could not update"});
+			}else{
+				User.findByUsername(username, function(err, users){
+					if(users.length > 0){
+						var user = users[0];
+						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories});
+					}
+				});
+			}
+		}
+	)
+});
 
 app.get("/me", function(req,res){
 	var session = req.session;
@@ -202,10 +234,10 @@ app.get("/me", function(req,res){
 			res.status(500).json({reason: "User does not exist"});
 		}else{
 			var user = users[0];
-			res.status(200).json({username:username, calories: user.calories});
+			res.status(200).json({username:username, caloriesTarget: user.caloriesTarget, calories: user.calories});
 		}
 	});
-})
+});
 
 app.get("/user/:username", function(req,res){
 	var session = req.session;
@@ -223,9 +255,23 @@ app.get("/user/:username", function(req,res){
 			res.status(500).json({reason: "User does not exist"});
 		}
 		var user = users[0];
-		res.status(200).json({username:username, calories: user.calories});
+		res.status(200).json({username:username, caloriesTarget: user.caloriesTarget, calories: user.calories});
 	});
 
 });
 
-
+app.post("/user/:username/delete", function(req,res){
+	var username = req.params.username;
+	var session = req.session;
+	if(username == null && session.username != username){
+		res.status(500).json({reason: "Invalid User"});
+		return;
+	}
+	User.remove({username: username}, function(err){
+		if(err){
+			res.status(500).json({reason: "Could not delete"});
+		}else{
+			res.sendStatus(200);
+		}
+	});
+});

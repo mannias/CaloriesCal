@@ -10,5 +10,9 @@ module.exports = keyMirror({
   USER_CALORIES_REM_SUCC: null,
   USER_CALORIES_REM_FAIL: null,
   USER_CALORIES_UPD_SUCC: null,
-  USER_CALORIES_UPD_FAIL: null
+  USER_CALORIES_UPD_FAIL: null,
+  USER_DELETE_SUCC: null,
+  USER_DELETE_FAIL: null,
+  USER_CALORIE_UPD_SUCC: null,
+  USER_CALORIE_UPD_FAIL: null
  });

@@ -14,7 +14,7 @@ var AuthActions = {
   					AppDispatcher.dispatch({
   						actionType: AuthConstants.AUTH_LOGIN_SUCC,
   						message: result
-  					})
+  					});
   					UserActions.getMe(redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){
@@ -35,7 +35,7 @@ var AuthActions = {
   					AppDispatcher.dispatch({
   						actionType: AuthConstants.AUTH_REG_SUCC,
   						message: result
-  					})
+  					});
             		UserActions.getMe(redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){

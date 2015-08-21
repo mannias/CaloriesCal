@@ -40,7 +40,6 @@ var UserActions = {
 			var dir = "/user/" + username + "/calories/add"
 			$.post(dir, {description:description, calories:calories})
   				.done(function(result){
-  					console.log(result);
   					AppDispatcher.dispatch({
   						actionType: UserConstants.USER_CALORIES_ADD_SUCC,
   						user: result
@@ -91,10 +90,47 @@ var UserActions = {
   					})
   				});
 		}
+	},
+
+	deleteUsername: function(username){
+		console.log(username);
+		if(username != null){
+			var dir = "/user/" + username + "/delete";
+			console.log("call");
+			$.post(dir, {username: username})
+			.done(function(result){
+					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_DELETE_SUCC,
+  						user: result
+  					})
+				})
+				.fail(function(xhr, textStatus, errorThrown){
+  					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_DELETE_FAIL,
+  						message: xhr.responseJSON.reason
+  					})
+  				});
+		}
+	},
+
+	editCalorieTarget: function(username, target){
+		if(username != null && target != null){
+			var dir = "/user/" + username + "/target/edit";
+			$.post(dir,{target:target})
+			.done(function(result){
+					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_TARGETCAL_UPD_SUCC,
+  						user: result
+  					})
+				})
+				.fail(function(xhr, textStatus, errorThrown){
+  					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_TARGETCAL_UPD_FAIL,
+  						message: xhr.responseJSON.reason
+  					})
+  				});
+		}
 	}
-
 }
-
-
 
 module.exports = UserActions;

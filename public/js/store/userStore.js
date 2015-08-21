@@ -4,20 +4,38 @@ var UserConstants = require('../constants/userConstants');
 var assign = require('object-assign');
 
 var _currentUser = {};
+var _loggedUser = {};
 var _isCurrentlyLoggued = false;
 
 var CHANGE_EVENT = 'change';
 
 function setUser(user) {
+	if(_loggedUser.username == user.username){
+		_loggedUser = user;
+	}
 	_currentUser = user;
 	_isCurrentlyLoggued = true;
 }
 
-function removeUser() {
+function removeLoggedUser(){
 	_currentUser = {};
-	_isCurrentlyLoggued = false
+	_loggedUser = {};
+	_isCurrentlyLoggued = false;
 }
 
+function removeUser() {
+	if(_currentUser.username == _loggedUser.username){
+		removeLoggedUser();
+	}else{
+		_currentUser = _loggedUser;
+	}
+}
+
+function setLoggedUser(user){
+	_currentUser = user;
+	_loggedUser = user;
+	_isCurrentlyLoggued = true;
+}
 function isToday(d1){
 
 	var today = new Date();
@@ -30,6 +48,10 @@ var UserStore =  assign({}, EventEmitter.prototype, {
 
 	getUser: function() {
     	return _currentUser;
+  	},
+
+  	getLogguedUser: function(){
+  		return _loggedUser;
   	},
 
   	getCurrentStatus: function(){
@@ -66,14 +88,22 @@ var UserStore =  assign({}, EventEmitter.prototype, {
 AppDispatcher.register(function(action) {
 	var message;
 	switch(action.actionType) {
-		case(UserConstants.USER_CALORIES_ADD_SUCC):
 		case(UserConstants.USER_ME_SUCC):
+			setLoggedUser(action.user);
+			UserStore.emitChange();
+			break;
+		case(UserConstants.USER_CALORIES_ADD_SUCC):
 		case(UserConstants.USER_CALORIES_REM_SUCC):
 		case(UserConstants.USER_CALORIES_UPD_SUCC):
+		case(UserConstants.USER_TARGETCAL_UPD_SUCC):
 			setUser(action.user);
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_LOGOUT_SUCC):
+			removeLoggedUser();
+			UserStore.emitChange();
+			break;
+		case(UserConstants.USER_DELETE_SUCC):
 			removeUser();
 			UserStore.emitChange();
 			break;
