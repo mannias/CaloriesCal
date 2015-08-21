@@ -14,7 +14,7 @@ mongoose.connect('mongodb://localhost/calorieCal');
 var Schema = mongoose.Schema;
 
 var caloriesSchema = new Schema({
-	timestamp:Date, 
+	timestamp:Number, 
 	description: String, 
 	calories: Number
 });
@@ -115,11 +115,14 @@ app.post("/user/:username/calories/add", function(req,res){
 	var description = req.body.description;
 	var calories = req.body.calories;
 	var session = req.session;
+	console.log(username + " " + session.username);
 	if(session.username != username){
 		res.status(500).json({reason: "Not enough permission to modify user"});
 		return;
 	}
-	var calorieEntry = {description: description, calories: calories, timestamp: new Date()}; 
+	var date = (+new Date());
+	console.log(date);
+	var calorieEntry = {description: description, calories: calories, timestamp: date}; 
 	console.log(calorieEntry);
 	var users = User.findByUsername(username, function(err, users){
 		if(users.length > 0){
@@ -135,10 +138,56 @@ app.post("/user/:username/calories/add", function(req,res){
 	});
 });
 
-app.delete("/user/:username/calories/remove", function(req, res){
+app.post("/user/:username/calories/remove", function(req, res){
 	var username = req.params.username;
 	var id = req.body.id;
+	var session = req.session;
+	if(session.username != username){
+		res.status(500).json({reason: "Not enough permission to modify user"});
+		return;
+	}
+	User.update(
+		{ username : username},
+		{ $pull : { calories : {_id:id}}},
+		function(err,status){
+			if(err){
+				res.status(500).json({reason:"Could not remove object"});
+			}else{
+				User.findByUsername(username, function(err, users){
+					if(users.length > 0){
+						var user = users[0];
+						res.status(200).json({username: user.username, calories: user.calories});
+					}
+				});
+			}
+		}
+	);
 });
+
+app.post("/user/:username/calories/edit", function(req,res){
+	var username = req.params.username;
+	var id = req.body.id;
+	var description = req.body.description;
+	var calories = req.body.calories;
+	var session = req.session;
+	if(session.username != username){
+		res.status(500).json({reason: "Not enough permission to modify user"});
+		return;
+	}
+	console.log(username + " " + id + " " + description + " " + calories);
+	User.update(
+		{username: username, 'calories._id': id },
+		{$set: {'calories.$.description': description, 'calories.$.calories': calories}},
+		function(err,status){
+			User.findByUsername(username, function(err, users){
+				if(users.length > 0){
+					var user = users[0];
+					res.status(200).json({username: user.username, calories: user.calories});
+				}
+			});
+		}
+	)
+})
 
 app.get("/me", function(req,res){
 	var session = req.session;

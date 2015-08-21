@@ -6,7 +6,9 @@ var Calories = require('./calories');
 function getCurrentUser(){
 	var user = UserStore.getUser();
 	var isLogged = UserStore.getCurrentStatus();
+	var totalCal = UserStore.getTodayCalorieSum();
 	return {
+		totalCal: totalCal,
 		loggedIn : isLogged,
 		user: user
 	}
@@ -21,8 +23,10 @@ var CalorieEntry = React.createClass({
   	getInitialState() {
   		var user = UserStore.getUser();
 		var isLogged = UserStore.getCurrentStatus();
+		var totalCal = UserStore.getTodayCalorieSum();
     	return {
     		user: user,
+    		totalCal: totalCal,
       		loggedIn: isLogged
     	};
   	},
@@ -46,14 +50,20 @@ var CalorieEntry = React.createClass({
 		}
 		return(
 			<div>
-				{this.state.user.username}
-				{this.state.user.calories.length == 0 ?
-					(<div> <a> Add calories now!</a>
-						<AddCalories username={this.state.user.username}/></div>):
-					(<div>
-						<Calories allCalories = {this.state.user.calories} username = {this.state.user.username}/>
-					</div>)}
-				
+				<AddCalories username={this.state.user.username} />
+				<div className="panel panel-default">
+  					<div className="panel-heading">
+    					<h3 className="panel-title">{this.state.user.username}</h3>
+  					</div>
+  					<div className="panel-body">
+					{this.state.user.calories.length == 0 ?
+						(<div> <p>You have no calories uploaded, Add them now!</p>
+						</div>):
+						(<div>  
+							<Calories allCalories = {this.state.user.calories} username = {this.state.user.username}/>
+						</div>)}
+					</div>
+				</div>
 			</div>
 		
 		)

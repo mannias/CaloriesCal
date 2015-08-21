@@ -3,6 +3,7 @@ var NotificationStore = require('../store/notificationStore');
 var UserStore = require('../store/userStore');
 var Notifications = require('./notifications');
 var UserActions = require('../actions/userActions');
+var AddCalories = require('./addCalories');
 
 
 function getAlertState() {
@@ -12,9 +13,11 @@ function getAlertState() {
 }
 
 function getCurrentUser(){
+	var user = UserStore.getUser();
 	var isLogged = UserStore.getCurrentStatus();
 	return {
 		loggedIn : isLogged,
+		user: user
 	}
 }
 
@@ -22,9 +25,11 @@ var Header = React.createClass({
 
 	getInitialState() {
 		var isLogged = UserStore.getCurrentStatus();
+		var user = UserStore.getUser();
     	return {
       		loggedIn: isLogged,
-      		allNotifications: {}
+      		allNotifications: {},
+      		user: user
     	};
   	},
 
@@ -60,13 +65,6 @@ var Header = React.createClass({
 				      <a className="navbar-brand" href="#">CaloriesCal</a>
 				    </div>
 				    <div className="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-				    	<ul className="nav navbar-nav">
-				    		{this.state.loggedIn ? (	
-					        		<a href="#">Link <span className="sr-only">(current)</span></a>
-				        		):
-				        		(<li></li>)
-				        	}
-				        </ul>
 				      <ul className="nav navbar-nav navbar-right">
 				      	{this.state.loggedIn ?
 				        	(<li><a href='#' onClick={this.handleLogout}>Log Out</a></li>):
