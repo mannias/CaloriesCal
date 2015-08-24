@@ -23,17 +23,21 @@ var AddCalories = React.createClass({
 
 	render: function() {
     	return (
-    		<div className="row well">
-    			<div className="col-md-4">
-		    		<input type="text" className="form-control" placeholder="Description (ie: Food @ Wendys)" value={this.state.description} onChange={this.handleDescriptionChange} required autofocus />
-		    	</div>
-		    	<div className="col-md-4">
-		    		<input type="number" className="form-control" placeholder="#Calories" value={this.state.calories} onChange={this.handleCaloriesChange} required/>
-                </div>
-                <div className="col-md-4">
-                	<button type='button' className="btn btn-primary btn-block" onClick={this.handleSubmit}>Add!</button>
-            	</div>
-            </div>
+    		<div className="panel panel-default well well-sm">
+	    		<div className="panel-body">
+	    			<div className="row">
+		    			<div className="col-md-4">
+				    		<input type="text" className="form-control" placeholder="Description (ie: Food @ Wendys)" value={this.state.description} onChange={this.handleDescriptionChange} required autofocus />
+				    	</div>
+				    	<div className="col-md-4">
+				    		<input type="number" className="form-control" placeholder="#Calories" value={this.state.calories} onChange={this.handleCaloriesChange} required/>
+		                </div>
+		                <div className="col-md-4">
+		                	<button type='button' className="btn btn-primary btn-block" onClick={this.handleSubmit}>Add!</button>
+		            	</div>
+		            </div>
+		        </div>
+		    </div>
 		)
     }
 });

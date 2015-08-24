@@ -44,6 +44,7 @@ AppDispatcher.register(function(action) {
 		case(AuthConstants.AUTH_LOGIN_FAIL):
 		case(AuthConstants.AUTH_REG_FAIL):
 		case(UserConstants.USER_CALORIES_ADD_FAIL):
+		case(UserConstants.USER_GET_FAIL):
 			message = action.message;
 			create(message);
 			NotificationStore.emitChange();

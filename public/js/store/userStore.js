@@ -36,12 +36,27 @@ function setLoggedUser(user){
 	_loggedUser = user;
 	_isCurrentlyLoggued = true;
 }
+
 function isToday(d1){
 
 	var today = new Date();
-  	return d1.getUTCFullYear() == today.getUTCFullYear() &&
-        	d1.getUTCMonth() == today.getUTCMonth() &&
-        	d1.getUTCDate() == today.getUTCDate();
+  	return d1.getFullYear() == today.getFullYear() &&
+        	d1.getMonth() == today.getMonth() &&
+        	d1.getDate() == today.getDate();
+}
+
+function filterCondition(date, startDate, endDate, startTime, endTime){
+	endDate += 24*3600000;
+	return date >=startDate && date <= endDate && date.getHours() >= startTime && 
+		date.getHours() <= endTime;
+}
+
+function escalatePrivilege(){
+	_loggedUser.privilege +=1;
+}
+
+function downgradePrivilege(){
+	_loggedUser.privilege -=1;
 }
 
 var UserStore =  assign({}, EventEmitter.prototype, {
@@ -56,6 +71,18 @@ var UserStore =  assign({}, EventEmitter.prototype, {
 
   	getCurrentStatus: function(){
   		return _isCurrentlyLoggued;
+  	},
+
+  	applyCurrentFilter: function(startDate, endDate, startTime, endTime){
+  		var resp = [];
+  		var i = 0;
+  		_currentUser.calories.forEach(function(current, index, arr){
+  			var date = new Date(current.timestamp);
+  			if(filterCondition(date,startDate,endDate,startTime,endTime)){
+  				resp[i++] = current;
+  			}
+  		});
+  		return resp;
   	},
 
   	getTodayCalorieSum: function(){
@@ -96,6 +123,7 @@ AppDispatcher.register(function(action) {
 		case(UserConstants.USER_CALORIES_REM_SUCC):
 		case(UserConstants.USER_CALORIES_UPD_SUCC):
 		case(UserConstants.USER_TARGETCAL_UPD_SUCC):
+		case(UserConstants.USER_GET_SUCC):
 			setUser(action.user);
 			UserStore.emitChange();
 			break;
@@ -109,6 +137,14 @@ AppDispatcher.register(function(action) {
 			break;
 		case(UserConstants.USER_CALORIES_REM_SUCC):
 			removeCalorie();
+			UserStore.emitChange();
+			break;
+		case(UserConstants.USER_ESCALATE_SUCC):
+			escalatePrivilege();
+			UserStore.emitChange();
+			break;
+		case(UserConstants.USER_DOWNGRADE_SUCC):
+			downgradePrivilege();
 			UserStore.emitChange();
 			break;
 	}

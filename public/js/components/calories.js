@@ -17,7 +17,8 @@ var Calories = React.createClass({
     	var calories = [];
 
     	for (var key in _allCalories) {
-      		calories.push(<CalorieEntry key={key} calorie={_allCalories[key]} username={this.props.username} />);
+    		var id = _allCalories[key]._id;
+      		calories.push(<CalorieEntry key={id} calorie={_allCalories[key]} username={this.props.username} />);
       	}
 		return(
 			<table className="table table-hover">

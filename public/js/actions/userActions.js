@@ -130,6 +130,56 @@ var UserActions = {
   					})
   				});
 		}
+	},
+
+	getUser: function(username){
+		if(username != null){
+			$.get("/user/" + username)
+			.done(function(result){
+					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_GET_SUCC,
+  						user: result
+  					})
+				})
+				.fail(function(xhr, textStatus, errorThrown){
+  					AppDispatcher.dispatch({
+  						actionType: UserConstants.USER_GET_FAIL,
+  						message: xhr.responseJSON.reason
+  					})
+  				});
+		}
+	},
+
+	escalatePrivilege: function(){
+		$.post("/me/privilege/escalate")
+			.done(function(result){
+			AppDispatcher.dispatch({
+					actionType: UserConstants.USER_ESCALATE_SUCC,
+					user: result
+				})
+			})
+			.fail(function(xhr, textStatus, errorThrown){
+				AppDispatcher.dispatch({
+					actionType: UserConstants.USER_ESCALATE_FAIL,
+					message: xhr.responseJSON.reason
+				})
+			});
+	},
+
+	downgradePrivilege: function(){
+		$.post("/me/privilege/downgrade")
+			.done(function(result){
+			AppDispatcher.dispatch({
+					actionType: UserConstants.USER_DOWNGRADE_SUCC,
+					user: result
+				})
+			})
+			.fail(function(xhr, textStatus, errorThrown){
+				AppDispatcher.dispatch({
+					actionType: UserConstants.USER_DOWNGRADE_FAIL,
+					message: xhr.responseJSON.reason
+				})
+			});
 	}
 }
 
