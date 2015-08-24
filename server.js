@@ -8,8 +8,11 @@ var express = require('express'),
 	session = require('express-session'),
 	uuid = require('node-uuid');
 
+var uristring =
+process.env.MONGOLAB_URI ||
+'mongodb://localhost/calorieCal';
 
-mongoose.connect('mongodb://localhost/calorieCal');	
+mongoose.connect(uristring);	
 
 var Schema = mongoose.Schema;
 
