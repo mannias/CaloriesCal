@@ -16,6 +16,7 @@
     "node-uuid": "^1.4.3",
     "object-assign": "^3.0.0",
     "react-router": "^0.13.3",
+    "reactify": "^1.1.1",
     "socket.io": "latest",
     "uglifyjs": "^2.4.10",
     "watchify": "^3.3.1"
