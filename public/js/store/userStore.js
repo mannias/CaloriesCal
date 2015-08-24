@@ -47,6 +47,9 @@ function isToday(d1){
 
 function filterCondition(date, startDate, endDate, startTime, endTime){
 	endDate += 24*3600000;
+	startDate += date.getTimezoneOffset()*60*1000;
+	endDate += date.getTimezoneOffset()*60*1000;
+
 	return date >=startDate && date <= endDate && date.getHours() >= startTime && 
 		date.getHours() <= endTime;
 }
