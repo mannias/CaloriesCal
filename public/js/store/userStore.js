@@ -59,6 +59,32 @@ function downgradePrivilege(){
 	_loggedUser.privilege -=1;
 }
 
+function addCalorie(object){
+	_currentUser.calories.push(object);
+}
+
+function removeCalorie(id){
+	for(var i = 0; i<_currentUser.calories.length; i++){
+		if(_currentUser.calories[i]._id == id){
+			_currentUser.calories.splice(i,1);
+			return;
+		}
+	}
+}
+
+function updateCalorie(calorie){
+	for(var i = 0; i<_currentUser.calories.length; i++){
+		if(_currentUser.calories[i]._id == calorie._id){
+			_currentUser.calories[i] = {_id: calorie._id, description: calorie.description, calories: calorie.calories, timestamp: _currentUser.calories[i].timestamp}
+			return;
+		}
+	}
+}
+
+function updateTarget(target){
+	_currentUser.caloriesTarget = target;
+}
+
 var UserStore =  assign({}, EventEmitter.prototype, {
 
 	getUser: function() {
@@ -113,16 +139,27 @@ var UserStore =  assign({}, EventEmitter.prototype, {
 });
 
 AppDispatcher.register(function(action) {
-	var message;
 	switch(action.actionType) {
 		case(UserConstants.USER_ME_SUCC):
 			setLoggedUser(action.user);
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_CALORIES_ADD_SUCC):
+			addCalorie(action.calorie.calorie);
+			UserStore.emitChange();
+			break;
 		case(UserConstants.USER_CALORIES_REM_SUCC):
+			removeCalorie(action.id);
+			UserStore.emitChange();
+			break;
 		case(UserConstants.USER_CALORIES_UPD_SUCC):
+			updateCalorie(action.calorie.calorie);
+			UserStore.emitChange();
+			break;
 		case(UserConstants.USER_TARGETCAL_UPD_SUCC):
+			updateTarget(action.target);
+			UserStore.emitChange();
+			break;
 		case(UserConstants.USER_GET_SUCC):
 			setUser(action.user);
 			UserStore.emitChange();

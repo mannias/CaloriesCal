@@ -42,7 +42,7 @@ var UserActions = {
   				.done(function(result){
   					AppDispatcher.dispatch({
   						actionType: UserConstants.USER_CALORIES_ADD_SUCC,
-  						user: result
+  						calorie: result
   					})
   				})
   				.fail(function(xhr, textStatus, errorThrown){
@@ -61,7 +61,7 @@ var UserActions = {
 				.done(function(result){
 					AppDispatcher.dispatch({
   						actionType: UserConstants.USER_CALORIES_REM_SUCC,
-  						user: result
+  						id:id
   					})
 				})
 				.fail(function(xhr, textStatus, errorThrown){
@@ -80,7 +80,7 @@ var UserActions = {
 				.done(function(result){
 					AppDispatcher.dispatch({
   						actionType: UserConstants.USER_CALORIES_UPD_SUCC,
-  						user: result
+  						calorie: result
   					})
 				})
 				.fail(function(xhr, textStatus, errorThrown){
@@ -120,7 +120,7 @@ var UserActions = {
 			.done(function(result){
 					AppDispatcher.dispatch({
   						actionType: UserConstants.USER_TARGETCAL_UPD_SUCC,
-  						user: result
+  						target: target
   					})
 				})
 				.fail(function(xhr, textStatus, errorThrown){

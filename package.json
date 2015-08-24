@@ -11,6 +11,7 @@
     "express-session": "^1.11.3",
     "flux": "^2.1.1",
     "history": "^1.4.0",
+    "jest": "^0.1.40",
     "keymirror": "^0.1.1",
     "mongoose": "latest",
     "node-uuid": "^1.4.3",

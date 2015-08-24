@@ -40,6 +40,7 @@ userSchema.statics.findByUsernameAndPassword = function(username, password, call
 }
 
 var User = mongoose.model('User', userSchema);
+var CaloriesSchema = mongoose.model('CaloriesSchema', caloriesSchema);
 
 var port = process.env.PORT || 8000;
 
@@ -125,7 +126,8 @@ app.post("/user/:username/calories/add", function(req,res){
 		return;
 	}
 	var date = (+new Date());
-	var calorieEntry = {description: description, calories: calories, timestamp: date}; 
+	var calorieEntry = new CaloriesSchema({description: description, calories: calories, timestamp: date});
+	console.log(calorieEntry); 
 	var users = User.findByUsername(username, function(err, users){
 		if(users.length > 0){
 			var user = users[0];
@@ -135,7 +137,7 @@ app.post("/user/:username/calories/add", function(req,res){
 					console.log(err);
 				}
 			});
-			res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
+			res.status(200).json({calorie: calorieEntry});
 		}
 	});
 });
@@ -155,12 +157,7 @@ app.post("/user/:username/calories/remove", function(req, res){
 			if(err){
 				res.status(500).json({reason:"Could not remove object"});
 			}else{
-				User.findByUsername(username, function(err, users){
-					if(users.length > 0){
-						var user = users[0];
-						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
-					}
-				});
+				res.sendStatus(200);
 			}
 		}
 	);
@@ -183,12 +180,7 @@ app.post("/user/:username/calories/edit", function(req,res){
 			if(err){
 				res.status(500).json({reason: "User not found"});
 			}else{
-				User.findByUsername(username, function(err, users){
-					if(users.length > 0){
-						var user = users[0];
-						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
-					}
-				});
+				res.status(200).json({calorie: {_id: id, description: description, calories: calories}});
 			}
 		}
 	)
@@ -209,12 +201,7 @@ app.post("/user/:username/target/edit", function(req,res){
 			if(err){
 				res.status(500).json({reason: "Could not update"});
 			}else{
-				User.findByUsername(username, function(err, users){
-					if(users.length > 0){
-						var user = users[0];
-						res.status(200).json({username: user.username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
-					}
-				});
+				res.status(200).json({target: target});
 			}
 		}
 	)
