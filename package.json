@@ -17,11 +17,12 @@
     "object-assign": "^3.0.0",
     "react-router": "^0.13.3",
     "socket.io": "latest",
+    "uglifyjs": "^2.4.10",
     "watchify": "^3.3.1"
   },
   "scripts": {
-    "start": "watchify -o public/js/bundle.js -v -d public/js/app.js",
-    "build": "browserify . -t [envify --NODE_ENV production] | uglifyjs -cm > public/js/bundle.min.js"
+    "start": "node server.js",
+    "postinstall": "browserify public/js/app.js -o public/js/bundle.js"
   },
   "browserify": {
     "transform": [
