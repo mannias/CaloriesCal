@@ -145,7 +145,7 @@ AppDispatcher.register(function(action) {
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_CALORIES_ADD_SUCC):
-			addCalorie(action.calorie.calorie);
+			addCalorie(action.calorie);
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_CALORIES_REM_SUCC):
@@ -153,7 +153,7 @@ AppDispatcher.register(function(action) {
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_CALORIES_UPD_SUCC):
-			updateCalorie(action.calorie.calorie);
+			updateCalorie(action.calorie);
 			UserStore.emitChange();
 			break;
 		case(UserConstants.USER_TARGETCAL_UPD_SUCC):

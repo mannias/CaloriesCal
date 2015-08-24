@@ -93,15 +93,12 @@ var UserActions = {
 	},
 
 	deleteUsername: function(username){
-		console.log(username);
 		if(username != null){
 			var dir = "/user/" + username + "/delete";
-			console.log("call");
 			$.post(dir, {username: username})
 			.done(function(result){
 					AppDispatcher.dispatch({
-  						actionType: UserConstants.USER_DELETE_SUCC,
-  						user: result
+  						actionType: UserConstants.USER_DELETE_SUCC
   					})
 				})
 				.fail(function(xhr, textStatus, errorThrown){
@@ -154,8 +151,7 @@ var UserActions = {
 		$.post("/me/privilege/escalate")
 			.done(function(result){
 			AppDispatcher.dispatch({
-					actionType: UserConstants.USER_ESCALATE_SUCC,
-					user: result
+					actionType: UserConstants.USER_ESCALATE_SUCC
 				})
 			})
 			.fail(function(xhr, textStatus, errorThrown){
@@ -170,8 +166,7 @@ var UserActions = {
 		$.post("/me/privilege/downgrade")
 			.done(function(result){
 			AppDispatcher.dispatch({
-					actionType: UserConstants.USER_DOWNGRADE_SUCC,
-					user: result
+					actionType: UserConstants.USER_DOWNGRADE_SUCC
 				})
 			})
 			.fail(function(xhr, textStatus, errorThrown){

@@ -11,7 +11,7 @@
     "express-session": "^1.11.3",
     "flux": "^2.1.1",
     "history": "^1.4.0",
-    "jest": "^0.1.40",
+    "jest-cli": "0.4.x",
     "keymirror": "^0.1.1",
     "mongoose": "latest",
     "node-uuid": "^1.4.3",
@@ -20,15 +20,20 @@
     "reactify": "^1.1.1",
     "socket.io": "latest",
     "uglifyjs": "^2.4.10",
-    "watchify": "^3.3.1"
+    "watchify": "^3.3.1",
+    "jsdom": ">= 0.1.23 < 4.0.0"
   },
   "scripts": {
     "start": "node server.js",
-    "postinstall": "browserify public/js/app.js -o public/js/bundle.js"
+    "postinstall": "browserify public/js/app.js -o public/js/bundle.js",
+    "test": "jest --verbose"
   },
   "browserify": {
     "transform": [
       "reactify"
     ]
+  },
+  "jest": {
+    "rootDir": "./public/js"
   }
 }

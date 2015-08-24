@@ -137,7 +137,7 @@ app.post("/user/:username/calories/add", function(req,res){
 					console.log(err);
 				}
 			});
-			res.status(200).json({calorie: calorieEntry});
+			res.status(200).json(calorieEntry);
 		}
 	});
 });
@@ -180,7 +180,7 @@ app.post("/user/:username/calories/edit", function(req,res){
 			if(err){
 				res.status(500).json({reason: "User not found"});
 			}else{
-				res.status(200).json({calorie: {_id: id, description: description, calories: calories}});
+				res.status(200).json({_id: id, description: description, calories: calories});
 			}
 		}
 	)
