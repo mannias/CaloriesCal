@@ -51,7 +51,6 @@ AppDispatcher.register(function(action) {
 			create(message);
 			NotificationStore.emitChange();
 			break;
-		case(AuthConstants.AUTH_REG_SUCC):
 		case(AuthConstants.AUTH_LOGIN_SUCC):
 			message = "Welcome!";
 			create(message);

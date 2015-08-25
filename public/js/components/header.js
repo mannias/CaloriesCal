@@ -89,11 +89,11 @@ var Header = React.createClass({
   	},
 
   	handleUpgradePrivilege: function(){
-  		UserActions.escalatePrivilege();
+  		UserActions.escalatePrivilege(this.state.loggedUser.username);
   	},
 
   	handleDowngradePrivilege: function(){
-  		UserActions.downgradePrivilege();
+  		UserActions.downgradePrivilege(this.state.loggedUser.username);
   	},
 
 	render: function(){
