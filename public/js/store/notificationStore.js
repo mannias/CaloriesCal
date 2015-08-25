@@ -44,6 +44,8 @@ AppDispatcher.register(function(action) {
 		case(AuthConstants.AUTH_LOGIN_FAIL):
 		case(AuthConstants.AUTH_REG_FAIL):
 		case(UserConstants.USER_CALORIES_ADD_FAIL):
+		case(UserConstants.USER_CALORIES_UPD_FAIL):
+		case(UserConstants.USER_CALORIES_REM_FAIL):
 		case(UserConstants.USER_GET_FAIL):
 			message = action.message;
 			create(message);
@@ -52,6 +54,16 @@ AppDispatcher.register(function(action) {
 		case(AuthConstants.AUTH_REG_SUCC):
 		case(AuthConstants.AUTH_LOGIN_SUCC):
 			message = "Welcome!";
+			create(message);
+			NotificationStore.emitChange();
+			break;
+		case(UserConstants.USER_LOGOUT_SUCC):
+			message = "Loggued out successfully";
+			create(message);
+			NotificationStore.emitChange();
+			break;
+		case(UserConstants.USER_DELETE_SUCC):
+			message = "User deleted successfully";
 			create(message);
 			NotificationStore.emitChange();
 			break;
