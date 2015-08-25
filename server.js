@@ -7,7 +7,8 @@ var express = require('express'),
 	bodyParser = require('body-parser'),
 	session = require('express-session'),
 	uuid = require('node-uuid'),
-	config = require('./config');
+	config = require('./config'),
+	Crypto = require('crypto');
 
 
 var env = process.env.NODE_ENV || 'development';
@@ -33,6 +34,7 @@ var userSchema = new Schema({
 	password: String,
 	caloriesTarget: Number,
 	privilege: Number,
+	salt: String,
 	calories: [caloriesSchema]
 });
 
@@ -47,6 +49,18 @@ userSchema.statics.findByUsernameAndPassword = function(username, password, call
 var User = mongoose.model('User', userSchema);
 var CaloriesSchema = mongoose.model('CaloriesSchema', caloriesSchema);
 
+function generateSalt() {
+   	var salt = Crypto.randomBytes(126);
+   	return salt.toString('base64');
+};
+
+function hashPassword(password, salt){
+	var hmac =  Crypto.createHmac('sha512', salt);
+	hmac.setEncoding("base64");
+	hmac.write(password);
+	hmac.end();
+	return hmac.read();
+};
 
 var server = app.listen(config.web.port, function () {
   var host = server.address().address;
@@ -83,7 +97,9 @@ app.post("/user/register", function(req,res){
 	var password = req.body.password;
 	User.findByUsername(username, function(err, users){
 		if(users.length == 0){
-			var user = new User({username: username, password:password, caloriesTarget: 0, privilege: 0});
+			var salt = generateSalt();
+			var hashedPassword = hashPassword(password, salt);
+			var user = new User({username: username, password:hashedPassword, caloriesTarget: 0, privilege: 0, salt: salt});
 			user.save();
 			session.privilege = user.privilege;
 			session.username = username;
@@ -101,14 +117,19 @@ app.post("/user/login", function(req,res){
 		res.status(500).json({ reason: "Incomplete credentials" });
 		return;
 	}
-	User.findByUsernameAndPassword(username,password, function(err,users){
+	User.findByUsername(username, function(err, users){
 		if(users.length != 0){
 			var user = users[0];
-			req.session.username = username;
-			req.session.privilege = users[0].privilege;
-			res.sendStatus(200);
+			if(hashPassword(password,user.salt) == user.password){
+				req.session.username = username;
+				req.session.privilege = users[0].privilege;
+				res.sendStatus(200);
+			}else{
+				res.status(401).json({ reason: "Incorrect User/Password"});
+			}
+			
 		}else{
-			res.status(401).json({ reason: "Incorrect User/Password" });
+			res.status(401).json({ reason: "Incorrect User/Password"});
 		}
 	});
 });
