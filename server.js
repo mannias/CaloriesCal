@@ -91,7 +91,37 @@ app.get("/", function(req, res){
 	res.sendFile(__dirname + '/index.html');
 });
 
-app.post("/user/register", function(req,res){
+app.post("/api/login", function(req,res){
+	var username = req.body.username;
+	var password = req.body.password;
+	if(typeof username == 'undefined' || username == null || typeof password == 'undefined' || password == null){
+		res.status(400).json({ reason: "Incomplete credentials" });
+		return;
+	}
+	User.findByUsername(username, function(err, users){
+		if(users.length != 0){
+			var user = users[0];
+			if(hashPassword(password,user.salt) == user.password){
+				req.session.username = username;
+				req.session.privilege = users[0].privilege;
+				res.status(200).json({ username: username});
+			}else{
+				res.status(401).json({ reason: "Incorrect User/Password"});
+			}
+			
+		}else{
+			res.status(404).json({ reason: "User does not exist"});
+		}
+	});
+});
+
+app.post("/api/logout",function(req,res){
+	req.session.privilege = 0;
+	req.session.username = null;
+	res.sendStatus(204);
+})
+
+app.post("/api/register", function(req,res){
 	var session = req.session;
 	var username = req.body.username;
 	var password = req.body.password;
@@ -102,45 +132,37 @@ app.post("/user/register", function(req,res){
 			var user = new User({username: username, password:hashedPassword, caloriesTarget: 0, privilege: 0, salt: salt});
 			user.save();
 			session.privilege = user.privilege;
-			session.username = username;
-			res.sendStatus(200);
+			session.userId = username;
+			res.status(201).json({ username: username});
 		}else{
-			res.status(500).json({ reason: "User already exists" });
+			res.status(409).json({ reason: "User already exists" });
 		}
 	});
 });
 
-app.post("/user/login", function(req,res){
-	var username = req.body.username;
-	var password = req.body.password;
-	if(typeof username == 'undefined' || username == null || typeof password == 'undefined' || password == null){
-		res.status(500).json({ reason: "Incomplete credentials" });
+app.get("/api/users/:username/calories", function(req,res){
+	var username = req.params.username;
+	var description = req.body.description;
+	var calories = req.body.calories;
+	var session = req.session;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
 		return;
 	}
-	User.findByUsername(username, function(err, users){
-		if(users.length != 0){
-			var user = users[0];
-			if(hashPassword(password,user.salt) == user.password){
-				req.session.username = username;
-				req.session.privilege = users[0].privilege;
-				res.sendStatus(200);
-			}else{
-				res.status(401).json({ reason: "Incorrect User/Password"});
-			}
-			
+	if(session.username != username && session.privilege < 1){
+		res.status(403).json({reason: "Not enough permission to get user"});
+		return;
+	}
+	var users = User.findByUsername(username, function(err, users){
+		if(users.length > 0){
+				res.status(200).json(users[0].calories);
 		}else{
-			res.status(401).json({ reason: "Incorrect User/Password"});
+			res.status(404).json({reason: "User not found"});
 		}
 	});
 });
 
-app.get("/user/logout",function(req,res){
-	req.session.privilege = 0;
-	req.session.username = null;
-	res.sendStatus(200);
-})
-
-app.post("/user/:username/calories/add", function(req,res){
+app.post("/api/users/:username/calories", function(req,res){
 	var username = req.params.username;
 	var description = req.body.description;
 	var calories = req.body.calories;
@@ -166,14 +188,14 @@ app.post("/user/:username/calories/add", function(req,res){
 				res.status(200).json(calorieEntry);
 			});
 		}else{
-			res.status(500).json({reason: "User not found"});
+			res.status(404).json({reason: "User not found"});
 		}
 	});
 });
 
-app.post("/user/:username/calories/remove", function(req, res){
+app.delete("/api/users/:username/calories/:calorieId", function(req, res){
 	var username = req.params.username;
-	var id = req.body.id;
+	var id = req.params.calorieId;
 	var session = req.session;
 	if(!session.username){
 		res.status(401).json({reason: "User not logged in"});
@@ -188,17 +210,17 @@ app.post("/user/:username/calories/remove", function(req, res){
 		{ $pull : { calories : {_id:id}}},
 		function(err,status){
 			if(err || status.nModified == 0){
-				res.status(500).json({reason:"Could not remove object"});
+				res.status(400).json({reason:"Could not remove object"});
 			}else{
-				res.sendStatus(200);
+				res.sendStatus(204);
 			}
 		}
 	);
 });
 
-app.post("/user/:username/calories/edit", function(req,res){
+app.put("/api/users/:username/calories/:calorieId", function(req,res){
 	var username = req.params.username;
-	var id = req.body.id;
+	var id = req.params.calorieId;
 	var description = req.body.description;
 	var calories = req.body.calories;
 	var session = req.session;
@@ -215,7 +237,7 @@ app.post("/user/:username/calories/edit", function(req,res){
 		{$set: {'calories.$.description': description, 'calories.$.calories': calories}},
 		function(err,status){
 			if(err || status.nModified == 0){
-				res.status(500).json({reason: "Could not find username/calorie entry"});
+				res.status(404).json({reason: "Could not find username/calorie entry"});
 			}else{
 				res.status(200).json({_id: id, description: description, calories: calories});
 			}
@@ -223,7 +245,7 @@ app.post("/user/:username/calories/edit", function(req,res){
 	)
 });
 
-app.post("/user/:username/target/edit", function(req,res){
+function updateTarget(req,res){
 	var username = req.params.username;
 	var session = req.session;
 	var target = req.body.target;
@@ -240,74 +262,15 @@ app.post("/user/:username/target/edit", function(req,res){
 		{caloriesTarget: target},
 		function(err,status){
 			if(err || status.nModified == 0){
-				res.status(500).json({reason: "Could not update"});
+				res.status(400).json({reason: "Could not update"});
 			}else{
 				res.status(200).json({target: target});
 			}
 		}
 	)
-});
+};
 
-app.get("/me", function(req,res){
-	var session = req.session;
-	var username = session.username;
-	if(!username){
-		res.status(401).json({reason: "User not logged in"});
-		return;
-	}
-	User.findByUsername(username, function(err,users){
-		if(users.length == 0){
-			res.status(500).json({reason: "User does not exist"});
-		}else{
-			var user = users[0];
-			res.status(200).json({username:username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
-		}
-	});
-});
-
-app.get("/user/:username", function(req,res){
-	var session = req.session;
-	var username = req.params.username;
-	if(session.username == null){
-		res.status(401).json({reason: "User not logged in"});
-		return;
-	}
-	if(session.username != username && session.privilege < 1){
-		res.status(403).json({reason: "Not enough permission"});
-		return;
-	}
-	User.findByUsername(username, function(err,users){
-		if(users.length == 0){
-			res.status(500).json({reason: "User does not exist"});
-		}else{
-			var user = users[0];
-			res.status(200).json({username:username, caloriesTarget: user.caloriesTarget, calories: user.calories, privilege: user.privilege});
-		}
-	});
-
-});
-
-app.post("/user/:username/delete", function(req,res){
-	var username = req.params.username;
-	var session = req.session;
-	if(!session.username){
-		res.status(401).json({reason: "User not logged in"});
-		return;
-	}
-	if(session.username != username && session.privilege < 2) {
-		res.status(403).json({reason: "Not enough permission"});
-		return;
-	}
-	User.remove({username: username}, function(err, status){
-		if(err || status.result.n == 0){
-			res.status(500).json({reason: "Could not delete"});
-		}else{
-			res.sendStatus(200);
-		}
-	});
-});
-
-app.post("/me/privilege/escalate", function(req,res){
+function upgradePriviledge(req,res){
 	var username = req.session.username;
 	var privilege = req.session.privilege;
 	if(!username){
@@ -326,13 +289,13 @@ app.post("/me/privilege/escalate", function(req,res){
 				res.status(401).json({reason: "User not logged in"});
 			}else{
 				req.session.privilege += 1;
-				res.sendStatus(200);
+				res.sendStatus(204);
 			}
 		}
 	)
-});
+};
 
-app.post("/me/privilege/downgrade", function(req,res){
+function downgradePriviledge(req, res){
 	var username = req.session.username;
 	var privilege = req.session.privilege;
 
@@ -353,8 +316,63 @@ app.post("/me/privilege/downgrade", function(req,res){
 				res.status(401).json({reason: "User not logged in"});
 			}else{
 				req.session.privilege -= 1;
-				res.sendStatus(200);
+				res.sendStatus(204);
 			}
 		}
 	)
+};
+
+app.patch("/api/users/:username",function(req,res){
+	var body = req.body;
+	if(body['target']){
+		updateTarget(req,res);
+	}else if(body["privilege"] && body["privilege"] > 0){
+		upgradePriviledge(req,res);
+	}else if(body["privilege"] && body["privilege"] < 0){
+		downgradePriviledge(req,res);
+	}else{
+		res.sendStatus(404);
+	}
+});
+
+app.get("/api/users/:username", function(req,res){
+	var session = req.session;
+	var username = req.params.username;
+	if(session.username == null){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
+	if(session.username != username && session.privilege < 1){
+		res.status(403).json({reason: "Not enough permission"});
+		return;
+	}
+	User.findByUsername(username, function(err,users){
+		if(users.length == 0){
+			res.status(404).json({reason: "User does not exist"});
+		}else{
+			var user = users[0];
+			res.status(200).json({username:username, calories: user.calories, caloriesTarget: user.caloriesTarget, privilege: user.privilege});
+		}
+	});
+
+});
+
+app.delete("/api/users/:username", function(req,res){
+	var username = req.params.username;
+	var session = req.session;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
+	if(session.username != username && session.privilege < 2) {
+		res.status(403).json({reason: "Not enough permission"});
+		return;
+	}
+	User.remove({username: username}, function(err, status){
+		if(err || status.result.n == 0){
+			res.status(400).json({reason: "Could not delete"});
+		}else{
+			res.sendStatus(204);
+		}
+	});
 });

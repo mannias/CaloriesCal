@@ -8,14 +8,15 @@ var AuthActions = {
 	login: function(username, password, redirect){
 		var scope = this;
 		if(username != null && password != null){
-  			console.log(username + " " + password);
-  			$.post("/user/login", {username:username, password:password})
+  			$.post("/api/login", {username:username, password:password})
   				.done(function(result){
   					AppDispatcher.dispatch({
   						actionType: AuthConstants.AUTH_LOGIN_SUCC,
   						message: result
   					});
-  					UserActions.getMe(redirect);
+            console.log(result);
+            localStorage.setItem("username", result.username);
+  					UserActions.getMe(result.username, redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){
   					AppDispatcher.dispatch({
@@ -30,13 +31,14 @@ var AuthActions = {
 		var scope = this;
 		if(username != null && password != null){
   			console.log(username + " " + password);
-  			$.post("/user/register", {username:username, password:password})
+  			$.post("/api/register", {username:username, password:password})
   				.done(function(result){
   					AppDispatcher.dispatch({
   						actionType: AuthConstants.AUTH_REG_SUCC,
   						message: result
   					});
-            		UserActions.getMe(redirect);
+              localStorage.setItem("username", result.username);
+            	UserActions.getMe(result.username, redirect);
   				})
   				.fail(function(xhr, textStatus, errorThrown){
   					AppDispatcher.dispatch({

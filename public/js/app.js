@@ -18,9 +18,12 @@ var CaloriesApp = React.createClass({
 
   getInitialState() {
     var scope = this;
-    UserActions.getMe(function(){
-      scope.context.router.replaceWith('/');
-    }); 
+    var userId = localStorage.getItem("username") || 0;
+    if(userId != 0){
+      UserActions.getMe(userId, function(){
+        scope.context.router.replaceWith('/');
+      });
+    } 
     return null; 
   },
 

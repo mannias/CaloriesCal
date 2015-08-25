@@ -58,7 +58,7 @@ AppDispatcher.register(function(action) {
 			NotificationStore.emitChange();
 			break;
 		case(UserConstants.USER_LOGOUT_SUCC):
-			message = "Loggued out successfully";
+			message = "Logged out successfully";
 			create(message);
 			NotificationStore.emitChange();
 			break;

@@ -83,7 +83,7 @@ var Header = React.createClass({
 
   	handleGoToMe: function(event){
   		var scope = this;
-  		UserActions.getMe(function(){
+  		UserActions.getMe(this.state.loggedUser.username,function(){
 			scope.context.router.replaceWith('/');
   		});
   	},
