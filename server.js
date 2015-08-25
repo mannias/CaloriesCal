@@ -1,19 +1,23 @@
 var express = require('express'),
 	path = require('path'), 
 	url = require('url'),
-	app = express(),
+	app = exports.app = express(),
 	http = require('http').createServer(app),
 	mongoose = require('mongoose'),
 	bodyParser = require('body-parser'),
 	session = require('express-session'),
 	uuid = require('node-uuid');
 
-var uristring =
-process.env.MONGOLAB_URI ||
-'mongodb://localhost/calorieCal';
 
-mongoose.connect(uristring);	
-
+var env = process.env.NODE_ENV || 'development';
+if ('development' == env) {
+	mongoose.connect('mongodb://localhost/calorieCal');
+}else if('production' == env){
+	mongoose.connect(process.env.MONGOLAB_URI);
+}else{
+	mongoose.connect('mongodb://localhost/calorieCal-test');
+};
+	
 var Schema = mongoose.Schema;
 
 var caloriesSchema = new Schema({
@@ -93,7 +97,6 @@ app.post("/user/register", function(req,res){
 app.post("/user/login", function(req,res){
 	var username = req.body.username;
 	var password = req.body.password;
-
 	if(typeof username == 'undefined' || username == null || typeof password == 'undefined' || password == null){
 		res.status(500).json({ reason: "Incomplete credentials" });
 		return;
@@ -105,7 +108,7 @@ app.post("/user/login", function(req,res){
 			req.session.privilege = users[0].privilege;
 			res.sendStatus(200);
 		}else{
-			res.status(500).json({ reason: "Incorrect User/Password" });
+			res.status(401).json({ reason: "Incorrect User/Password" });
 		}
 	});
 });
@@ -121,13 +124,16 @@ app.post("/user/:username/calories/add", function(req,res){
 	var description = req.body.description;
 	var calories = req.body.calories;
 	var session = req.session;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
 	if(session.username != username && session.privilege < 1){
 		res.status(403).json({reason: "Not enough permission to modify user"});
 		return;
 	}
 	var date = (+new Date());
 	var calorieEntry = new CaloriesSchema({description: description, calories: calories, timestamp: date});
-	console.log(calorieEntry); 
 	var users = User.findByUsername(username, function(err, users){
 		if(users.length > 0){
 			var user = users[0];
@@ -136,8 +142,10 @@ app.post("/user/:username/calories/add", function(req,res){
 				if(err){
 					console.log(err);
 				}
+				res.status(200).json(calorieEntry);
 			});
-			res.status(200).json(calorieEntry);
+		}else{
+			res.status(500).json({reason: "User not found"});
 		}
 	});
 });
@@ -146,6 +154,10 @@ app.post("/user/:username/calories/remove", function(req, res){
 	var username = req.params.username;
 	var id = req.body.id;
 	var session = req.session;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
 	if(session.username != username && session.privilege < 1){
 		res.status(403).json({reason: "Not enough permission to modify user"});
 		return;
@@ -154,7 +166,7 @@ app.post("/user/:username/calories/remove", function(req, res){
 		{ username : username},
 		{ $pull : { calories : {_id:id}}},
 		function(err,status){
-			if(err){
+			if(err || status.nModified == 0){
 				res.status(500).json({reason:"Could not remove object"});
 			}else{
 				res.sendStatus(200);
@@ -169,6 +181,10 @@ app.post("/user/:username/calories/edit", function(req,res){
 	var description = req.body.description;
 	var calories = req.body.calories;
 	var session = req.session;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
 	if(session.username != username && session.privilege < 1){
 		res.status(403).json({reason: "Not enough permission to modify user"});
 		return;
@@ -177,8 +193,8 @@ app.post("/user/:username/calories/edit", function(req,res){
 		{username: username, 'calories._id': id },
 		{$set: {'calories.$.description': description, 'calories.$.calories': calories}},
 		function(err,status){
-			if(err){
-				res.status(500).json({reason: "User not found"});
+			if(err || status.nModified == 0){
+				res.status(500).json({reason: "Could not find username/calorie entry"});
 			}else{
 				res.status(200).json({_id: id, description: description, calories: calories});
 			}
@@ -190,6 +206,10 @@ app.post("/user/:username/target/edit", function(req,res){
 	var username = req.params.username;
 	var session = req.session;
 	var target = req.body.target;
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
 	if(session.username != username && session.privilege < 1){
 		res.status(403).json({reason: "Not enough permission to modify user"});
 		return;
@@ -198,7 +218,7 @@ app.post("/user/:username/target/edit", function(req,res){
 		{username: username},
 		{caloriesTarget: target},
 		function(err,status){
-			if(err){
+			if(err || status.nModified == 0){
 				res.status(500).json({reason: "Could not update"});
 			}else{
 				res.status(200).json({target: target});
@@ -210,7 +230,7 @@ app.post("/user/:username/target/edit", function(req,res){
 app.get("/me", function(req,res){
 	var session = req.session;
 	var username = session.username;
-	if(username == null){
+	if(!username){
 		res.status(401).json({reason: "User not logged in"});
 		return;
 	}
@@ -249,12 +269,16 @@ app.get("/user/:username", function(req,res){
 app.post("/user/:username/delete", function(req,res){
 	var username = req.params.username;
 	var session = req.session;
-	if(username == null && session.username != username && session.privilege < 2) {
+	if(!session.username){
+		res.status(401).json({reason: "User not logged in"});
+		return;
+	}
+	if(session.username != username && session.privilege < 2) {
 		res.status(403).json({reason: "Not enough permission"});
 		return;
 	}
-	User.remove({username: username}, function(err){
-		if(err){
+	User.remove({username: username}, function(err, status){
+		if(err || status.result.n == 0){
 			res.status(500).json({reason: "Could not delete"});
 		}else{
 			res.sendStatus(200);
@@ -265,8 +289,7 @@ app.post("/user/:username/delete", function(req,res){
 app.post("/me/privilege/escalate", function(req,res){
 	var username = req.session.username;
 	var privilege = req.session.privilege;
-
-	if(username == null){
+	if(!username){
 		res.status(401).json({reason: "User not logged in"});
 		return;
 	}
@@ -292,7 +315,7 @@ app.post("/me/privilege/downgrade", function(req,res){
 	var username = req.session.username;
 	var privilege = req.session.privilege;
 
-	if(username == null){
+	if(!username){
 		res.status(401).json({reason: "User not logged in"});
 		return;
 	}
