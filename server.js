@@ -6,16 +6,17 @@ var express = require('express'),
 	mongoose = require('mongoose'),
 	bodyParser = require('body-parser'),
 	session = require('express-session'),
-	uuid = require('node-uuid');
+	uuid = require('node-uuid'),
+	config = require('./config');
 
 
 var env = process.env.NODE_ENV || 'development';
 if ('development' == env) {
-	mongoose.connect('mongodb://localhost/calorieCal');
+	mongoose.connect(config.db.dev);
 }else if('production' == env){
 	mongoose.connect(process.env.MONGOLAB_URI);
 }else{
-	mongoose.connect('mongodb://localhost/calorieCal-test');
+	mongoose.connect(config.db.test);
 };
 	
 var Schema = mongoose.Schema;
@@ -46,9 +47,8 @@ userSchema.statics.findByUsernameAndPassword = function(username, password, call
 var User = mongoose.model('User', userSchema);
 var CaloriesSchema = mongoose.model('CaloriesSchema', caloriesSchema);
 
-var port = process.env.PORT || 8000;
 
-var server = app.listen(port, function () {
+var server = app.listen(config.web.port, function () {
   var host = server.address().address;
   var port = server.address().port;
   console.log('Calorie counter running at http://%s:%s', host, port);
