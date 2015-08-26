@@ -78,7 +78,7 @@ function removeCalorie(id){
 function updateCalorie(calorie){
 	for(var i = 0; i<_currentUser.calories.length; i++){
 		if(_currentUser.calories[i]._id == calorie._id){
-			_currentUser.calories[i] = {_id: calorie._id, description: calorie.description, calories: calorie.calories, timestamp: _currentUser.calories[i].timestamp}
+			_currentUser.calories[i] = {_id: calorie._id, description: calorie.description, calories: parseInt(calorie.calories), timestamp: _currentUser.calories[i].timestamp}
 			return;
 		}
 	}

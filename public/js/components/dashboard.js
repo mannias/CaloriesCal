@@ -46,7 +46,7 @@ var Dashboard = React.createClass({
     		user: user,
     		calories: calories,
     		totalCal: totalCal,
-      		loggedIn: isLogged
+      	loggedIn: isLogged
     	};
   	},
 
