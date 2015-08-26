@@ -5,13 +5,13 @@ var express = require('express'),
 	http = require('http').createServer(app),
 	mongoose = require('mongoose'),
 	bodyParser = require('body-parser'),
-	session = require('express-session'),
 	uuid = require('node-uuid'),
 	config = require('./config'),
 	Crypto = require('crypto'),
 	passport = require('passport'),
-  	BasicStrategy = require('gt-passport-http').BasicStrategy;
-
+  	LocalStrategy = require('passport-local').Strategy,
+  	jwt = require('jwt-simple'),
+  	JwtStrategy = require('passport-jwt').Strategy;
 
 var env = process.env.NODE_ENV || 'development';
 if ('development' == env) {
@@ -22,6 +22,9 @@ if ('development' == env) {
 	mongoose.connect(config.db.test);
 };
 	
+
+var tokenSecret = 'verySecret';
+
 var Schema = mongoose.Schema;
 
 var caloriesSchema = new Schema({
@@ -64,15 +67,7 @@ function hashPassword(password, salt){
 	return hmac.read();
 };
 
-passport.serializeUser(function(user, done) {
-  done(null, user);
-});
-
-passport.deserializeUser(function(user, done) {
-  done(null, user);
-});
-
-passport.use(new BasicStrategy(
+passport.use(new LocalStrategy(
   	function(username, password, done) {
     	User.findOne({ username: username }, function(err, user) {
       		if (err) { return done(err); }
@@ -87,13 +82,22 @@ passport.use(new BasicStrategy(
   	}
 ));
 
-function ensureAuthenticated(req,res,next){
-	if(req.isAuthenticated()){
-	        next(); 
-	}else{
-	    res.sendStatus(403); //forbidden || unauthorized
-	}
-};
+var opts = {}
+opts.secretOrKey = 'verySecret';
+
+passport.use(new JwtStrategy(opts, function(jwt_payload, done) {
+    User.findOne({_id: jwt_payload.userId}, function(err, user) {
+        if (err) {
+            return done(err, false);
+        }
+        if (user) {
+            done(null, user);
+        } else {
+            done(null, false);
+            // or you could create a new account 
+        }
+    });
+}));
 
 var server = app.listen(config.web.port, function () {
   var host = server.address().address;
@@ -106,37 +110,32 @@ app.use(bodyParser.urlencoded({
   extended: true
 }));
 app.use(bodyParser.json());
-app.use(session({
-  genid: function(req) {
-    return uuid.v4()
-  },
-  secret: 'secret key for session hash',
-  cookie: {},
-  resave: true,
-  saveUninitialized: true
-}));
 app.use(passport.initialize());
-app.use(passport.session());
 
 
 app.get("/", function(req, res){
-	if(typeof req.session.username == 'undefined'){
-		req.session.username = null;
-	}
 	res.sendFile(__dirname + '/index.html');
 });
 
-app.post("/api/login", passport.authenticate('basic', { session: false }), function(req,res){
-	res.status(200).json({username: req.user.username});
+app.post('/api/login', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) { return next(err) }
+    if (!user) {
+      return res.status(401).json(401, { reason: 'User not existent' });
+    }
+    var token = jwt.encode({ userId: user._id}, tokenSecret);
+    res.status(200).json({ token : token , username: user.username});
+
+  })(req, res, next);
 });
 
-app.post("/api/logout", passport.authenticate('basic', { session: false }),function(req,res){
-	res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+
+app.post("/api/logout", passport.authenticate('jwt', { session: false }),function(req,res){
 	res.sendStatus(204);
 });
 
 app.post("/api/register", function(req,res){
-	var session = req.session;
+	console.log(req.body);
 	var username = req.body.username;
 	var password = req.body.password;
 	User.findByUsername(username, function(err, users){
@@ -145,8 +144,6 @@ app.post("/api/register", function(req,res){
 			var hashedPassword = hashPassword(password, salt);
 			var user = new User({username: username, password:hashedPassword, caloriesTarget: 0, privilege: 0, salt: salt});
 			user.save();
-			session.privilege = user.privilege;
-			session.userId = username;
 			res.status(201).json({ username: username});
 		}else{
 			res.status(409).json({ reason: "User already exists" });
@@ -154,7 +151,7 @@ app.post("/api/register", function(req,res){
 	});
 });
 
-app.get("/api/users/:username/calories", passport.authenticate('basic', { session: false }), function(req,res){
+app.get("/api/users/:username/calories", passport.authenticate('jwt', { session: false }), function(req,res){
 	var username = req.params.username;
 	var description = req.body.description;
 	var calories = req.body.calories;
@@ -172,7 +169,7 @@ app.get("/api/users/:username/calories", passport.authenticate('basic', { sessio
 	});
 });
 
-app.post("/api/users/:username/calories", passport.authenticate('basic', { session: false }), function(req,res){
+app.post("/api/users/:username/calories", passport.authenticate('jwt', { session: false }), function(req,res){
 	var username = req.params.username;
 	var description = req.body.description;
 	var calories = req.body.calories;
@@ -199,7 +196,7 @@ app.post("/api/users/:username/calories", passport.authenticate('basic', { sessi
 	});
 });
 
-app.delete("/api/users/:username/calories/:calorieId", passport.authenticate('basic', { session: false }), function(req, res){
+app.delete("/api/users/:username/calories/:calorieId", passport.authenticate('jwt', { session: false }), function(req, res){
 	var username = req.params.username;
 	var id = req.params.calorieId;
 	var logged = req.user;
@@ -220,7 +217,7 @@ app.delete("/api/users/:username/calories/:calorieId", passport.authenticate('ba
 	);
 });
 
-app.get("/api/users/:username/calories/:calorieId", passport.authenticate('basic', { session: false }), function(req, res){
+app.get("/api/users/:username/calories/:calorieId", passport.authenticate('jwt', { session: false }), function(req, res){
 	var username = req.params.username;
 	var id = req.params.calorieId;
 	var logged = req.user;
@@ -239,7 +236,7 @@ app.get("/api/users/:username/calories/:calorieId", passport.authenticate('basic
 	})
 });
 
-app.put("/api/users/:username/calories/:calorieId", passport.authenticate('basic', { session: false }), function(req,res){
+app.put("/api/users/:username/calories/:calorieId", passport.authenticate('jwt', { session: false }), function(req,res){
 	var username = req.params.username;
 	var id = req.params.calorieId;
 	var description = req.body.description;
@@ -301,6 +298,10 @@ function upgradePriviledge(req,res){
 			if(err){
 				res.status(401).json({reason: "User not logged in"});
 			}else{
+				console.log("access");
+				console.log(req.user.privilege);
+				req.user.privilege += 1;
+				console.log(req.user.privilege);
 				res.sendStatus(204);
 			}
 		}
@@ -327,26 +328,30 @@ function downgradePriviledge(req, res){
 			if(err){
 				res.status(401).json({reason: "User not logged in"});
 			}else{
+				req.user.privilege -=1;
 				res.sendStatus(204);
 			}
 		}
 	)
 };
 
-app.patch("/api/users/:username", passport.authenticate('basic', { session: false }),function(req,res){
+app.patch("/api/users/:username", passport.authenticate('jwt', { session: false }),function(req,res){
 	var body = req.body;
+	console.log(body);
 	if(body['target']){
 		updateTarget(req,res);
 	}else if(body["privilege"] && body["privilege"] > 0){
+		console.log("mayor");
 		upgradePriviledge(req,res);
 	}else if(body["privilege"] && body["privilege"] < 0){
+		console.log("minor");
 		downgradePriviledge(req,res);
 	}else{
 		res.sendStatus(404);
 	}
 });
 
-app.get("/api/users/:username", passport.authenticate('basic', { session: false }), function(req,res){
+app.get("/api/users/:username", passport.authenticate('jwt', { session: false }), function(req,res){
 	var logged = req.user;
 	var username = req.params.username;
 	if(logged.username != username && logged.privilege < 1){
@@ -364,11 +369,11 @@ app.get("/api/users/:username", passport.authenticate('basic', { session: false 
 
 });
 
-app.delete("/api/users/:username", passport.authenticate('basic', { session: false }), function(req,res){
+app.delete("/api/users/:username", passport.authenticate('jwt', { session: false }), function(req,res){
 	var username = req.params.username;
 	var logged = req.user;
 
-	if(logged.username != username && loggued.privilege < 2) {
+	if(logged.username != username && logged.privilege < 2) {
 		res.status(403).json({reason: "Not enough permission"});
 		return;
 	}

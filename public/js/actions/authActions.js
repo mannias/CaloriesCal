@@ -10,15 +10,15 @@ var AuthActions = {
 		if(username != null && password != null){
       $.ajax({
         url: '/api/login',
-        username: username,
-        password: password,
+        contentType: 'application/json',
+        data: JSON.stringify({username: username, password:password}),
         type: 'POST',
         success: function(result){
   				AppDispatcher.dispatch({
   					actionType: AuthConstants.AUTH_LOGIN_SUCC,
   					message: result
   				});
-          console.log(result);
+          localStorage.setItem("token", "JWT " + result.token);
           localStorage.setItem("username", result.username);
   				UserActions.getMe(result.username, redirect);
   			},
@@ -35,7 +35,6 @@ var AuthActions = {
 	register: function(username, password, redirect){
 		var scope = this;
 		if(username != null && password != null){
-  			console.log(username + " " + password);
   			$.post("/api/register", {username:username, password:password})
   				.done(function(result){
   					AppDispatcher.dispatch({
