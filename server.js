@@ -121,7 +121,7 @@ app.post('/api/login', function(req, res, next) {
   passport.authenticate('local', function(err, user, info) {
     if (err) { return next(err) }
     if (!user) {
-      return res.status(401).json(401, { reason: 'User not existent' });
+      return res.status(401).json({ reason: 'User not existent' });
     }
     var token = jwt.encode({ userId: user._id}, tokenSecret);
     res.status(200).json({ token : token , username: user.username});
@@ -135,7 +135,6 @@ app.post("/api/logout", passport.authenticate('jwt', { session: false }),functio
 });
 
 app.post("/api/register", function(req,res){
-	console.log(req.body);
 	var username = req.body.username;
 	var password = req.body.password;
 	User.findByUsername(username, function(err, users){
@@ -298,10 +297,7 @@ function upgradePriviledge(req,res){
 			if(err){
 				res.status(401).json({reason: "User not logged in"});
 			}else{
-				console.log("access");
-				console.log(req.user.privilege);
 				req.user.privilege += 1;
-				console.log(req.user.privilege);
 				res.sendStatus(204);
 			}
 		}
@@ -337,14 +333,11 @@ function downgradePriviledge(req, res){
 
 app.patch("/api/users/:username", passport.authenticate('jwt', { session: false }),function(req,res){
 	var body = req.body;
-	console.log(body);
 	if(body['target']){
 		updateTarget(req,res);
 	}else if(body["privilege"] && body["privilege"] > 0){
-		console.log("mayor");
 		upgradePriviledge(req,res);
 	}else if(body["privilege"] && body["privilege"] < 0){
-		console.log("minor");
 		downgradePriviledge(req,res);
 	}else{
 		res.sendStatus(404);
